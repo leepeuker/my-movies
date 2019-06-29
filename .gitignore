@@ -1,6 +1,7 @@
 /.idea
 /tmp/*
 !/tmp/.gitkeep
+/.env
 
 ###> symfony/framework-bundle ###
 /.env.local

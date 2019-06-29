@@ -11,7 +11,7 @@ class Api
 
     public function __construct()
     {
-        $token        = new \Tmdb\ApiToken('785497e189cc92acb753dfe5d69da20d');
+        $token        = new \Tmdb\ApiToken($_ENV['TMDB_TOKEN']);
         $this->client = new \Tmdb\Client($token);
     }
 
