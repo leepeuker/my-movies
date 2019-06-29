@@ -40,7 +40,7 @@ class Mapper
             LetterboxdId::createByString($this->extractId($itemData['Letterboxd URI'])),
             Title::createFromString($itemData['Name']),
             Year::createFromInt((int)$itemData['Year']),
-            DiaryRating::createByInt((int)$itemData['Rating']),
+            ($itemData['Rating'] !== '') ? DiaryRating::createByInt((int)$itemData['Rating']) : null,
             (bool)$itemData['Rewatch'],
             DateTime::createFromString($itemData['Watched Date'])
         );

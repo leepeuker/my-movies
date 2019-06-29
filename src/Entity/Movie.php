@@ -45,8 +45,8 @@ class Movie
     {
         $this->watchDate     = new ArrayCollection();
         $this->imdbId        = ($imdbId !== null) ? $imdbId->getId() : null;
-        $this->letterboxd_id = ($imdbId !== null) ? $letterboxdId->getId() : null;
-        $this->tmdbId        = ($imdbId !== null) ? $tmdbId->getId() : null;
+        $this->letterboxd_id = ($letterboxdId !== null) ? $letterboxdId->getId() : null;
+        $this->tmdbId        = ($tmdbId !== null) ? $tmdbId->getId() : null;
     }
 
     public function addWatchDate(WatchDate $watchDate) : self

@@ -1,5 +1,4 @@
 /.idea
-Makefile
 /tmp/*
 !/tmp/.gitkeep
 

@@ -77,7 +77,7 @@ class LoadDiaryCommand extends Command
                         'Added: %s - %s - %s' . PHP_EOL,
                         $diaryItem->getTitle(),
                         $diaryItem->getWatchDate()->format('Y-m-d'),
-                        str_repeat('*', $diaryItem->getRating()->asInt())
+                        ($diaryItem->getRating() !== null) ? str_repeat('*', $diaryItem->getRating()->asInt()) : null
                     )
                 );
             } else {
@@ -98,7 +98,7 @@ class LoadDiaryCommand extends Command
                             'Added: %s - %s - %s' . PHP_EOL,
                             $diaryItem->getTitle(),
                             $diaryItem->getWatchDate()->format('Y-m-d'),
-                            str_repeat('*', $diaryItem->getRating()->asInt())
+                            ($diaryItem->getRating() !== null) ? str_repeat('*', $diaryItem->getRating()->asInt()) : null
                         )
                     );
                 }

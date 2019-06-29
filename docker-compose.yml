@@ -1,0 +1,25 @@
+version: "3.5"
+
+services:
+  my-movies_php:
+    build: ./build/php
+    container_name: my-movies_php
+    user: "${USER_ID}"
+    volumes:
+      - ./:/var/www/my-movies
+
+  my-movies_mysql:
+    image: mysql:5.7
+    container_name: my-movies_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    volumes:
+      - dbdata:/var/lib/mysql
+    ports:
+      - "3308:3306"
+
+volumes:
+  dbdata:
