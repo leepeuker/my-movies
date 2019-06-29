@@ -90,7 +90,7 @@ class LoadDiaryCommand extends Command
                         'Added: %s - %s - %s' . PHP_EOL,
                         $movie->getTitle(),
                         $newWatchDate->getDate()->format('Y-m-d'),
-                        ($newWatchDate->getDiaryRating() !== null) ? str_repeat('*', $newWatchDate->getDiaryRating()->asInt()) : null
+                        ($newWatchDate->getDiaryRating() !== null) ? $newWatchDate->getDiaryRating()->getAsStars() : null
                     )
                 );
             } else {
@@ -111,7 +111,7 @@ class LoadDiaryCommand extends Command
                             'Added: %s - %s - %s' . PHP_EOL,
                             $movie->getTitle(),
                             $newWatchDate->getDate()->format('Y-m-d'),
-                            ($newWatchDate->getDiaryRating() !== null) ? str_repeat('*', $newWatchDate->getDiaryRating()->asInt()) : null
+                            ($newWatchDate->getDiaryRating() !== null) ? $newWatchDate->getDiaryRating()->getAsStars() : null
                         )
                     );
                 }

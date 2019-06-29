@@ -34,4 +34,9 @@ class DiaryRating implements Rating
             throw new \Exception('Format of rating is invalid: ' . $rating);
         }
     }
+
+    public function getAsStars() : string
+    {
+        return str_repeat('*', $this->asInt());
+    }
 }

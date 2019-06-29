@@ -39,13 +39,20 @@ class GetDiary extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $movies = $this->movieRepository->findAll();
+        $movies = $this->movieRepository->findBy([], ['title' => 'ASC']);
 
         foreach ($movies as $movie) {
             $output->write($movie->getTitle() . ' (' . $movie->getReleaseDate()->format('Y') . '): ' . PHP_EOL);
 
             foreach ($movie->getWatchDates() as $watchDate) {
-                $output->write('- ' . $watchDate->getDate()->format('Y-m-d') . ' | ' . str_repeat('*', $watchDate->getDiaryRating()->asInt()) . PHP_EOL . PHP_EOL);
+
+                if ($watchDate->getDiaryRating() !== null) {
+                    $ratingStars = $watchDate->getDiaryRating()->getAsStars();
+                } else {
+                    $ratingStars = '-';
+                }
+
+                $output->write('- ' . $watchDate->getDate()->format('Y-m-d') . ' | ' . $ratingStars . PHP_EOL);
             }
         }
     }
