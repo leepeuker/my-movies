@@ -4,13 +4,17 @@ namespace App\Command;
 
 use App\Entity\Movie;
 use App\Entity\WatchDate;
-use App\Letterboxd\Api;
+use App\Letterboxd;
 use App\Letterboxd\Resources\Diary\Item;
 use App\Letterboxd\Resources\Diary\Reader;
+use App\Provider\Tmdb;
 use App\Repository\MovieRepository;
+use App\ValueObject\DateTime;
 use App\ValueObject\ImdbId;
 use App\ValueObject\LetterboxdId;
+use App\ValueObject\Title;
 use App\ValueObject\TmdbId;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -28,7 +32,9 @@ class LoadDiaryCommand extends Command
 
     private          $movieRepository;
 
-    public function __construct(EntityManagerInterface $em, MovieRepository $movieRepository, Reader $diaryReader, Api $letterboxApi)
+    private          $tmdbApi;
+
+    public function __construct(EntityManagerInterface $em, MovieRepository $movieRepository, Reader $diaryReader, Letterboxd\Api $letterboxApi, Tmdb\Api $tmdbApi)
     {
         parent::__construct();
 
@@ -36,6 +42,7 @@ class LoadDiaryCommand extends Command
         $this->diaryReader     = $diaryReader;
         $this->movieRepository = $movieRepository;
         $this->em              = $em;
+        $this->tmdbApi         = $tmdbApi;
     }
 
     protected function configure()
@@ -51,6 +58,7 @@ class LoadDiaryCommand extends Command
         foreach ($diaryItemList as $diaryItem) {
             $movie = $this->movieRepository->findOneBy(['letterboxd_id' => $diaryItem->getLetterboxdId()]);
 
+
             if ($movie === null) {
                 try {
                     $providerIds = $this->letterboxdApi->getProviderIdsByLetterboxdId($diaryItem->getLetterboxdId());
@@ -59,10 +67,15 @@ class LoadDiaryCommand extends Command
                     die(500);
                 }
 
+                $tmdbMovie = $this->tmdbApi->getMovie(TmdbId::createByString($providerIds['tmdb']));
+
                 $movie = new Movie(
+                    TmdbId::createByString($providerIds['tmdb']),
                     ImdbId::createByString($providerIds['imdb']),
                     LetterboxdId::createByString($diaryItem->getLetterboxdId()),
-                    TmdbId::createByString($providerIds['tmdb'])
+                    Title::createFromString($tmdbMovie['title']),
+                    DateTime::createFromString($tmdbMovie['release_date']),
+                    new ArrayCollection()
                 );
             }
 
@@ -75,9 +88,9 @@ class LoadDiaryCommand extends Command
                 $output->write(
                     sprintf(
                         'Added: %s - %s - %s' . PHP_EOL,
-                        $diaryItem->getTitle(),
-                        $diaryItem->getWatchDate()->format('Y-m-d'),
-                        ($diaryItem->getRating() !== null) ? str_repeat('*', $diaryItem->getRating()->asInt()) : null
+                        $movie->getTitle(),
+                        $newWatchDate->getDate()->format('Y-m-d'),
+                        ($newWatchDate->getDiaryRating() !== null) ? str_repeat('*', $newWatchDate->getDiaryRating()->asInt()) : null
                     )
                 );
             } else {
@@ -96,9 +109,9 @@ class LoadDiaryCommand extends Command
                     $output->write(
                         sprintf(
                             'Added: %s - %s - %s' . PHP_EOL,
-                            $diaryItem->getTitle(),
-                            $diaryItem->getWatchDate()->format('Y-m-d'),
-                            ($diaryItem->getRating() !== null) ? str_repeat('*', $diaryItem->getRating()->asInt()) : null
+                            $movie->getTitle(),
+                            $newWatchDate->getDate()->format('Y-m-d'),
+                            ($newWatchDate->getDiaryRating() !== null) ? str_repeat('*', $newWatchDate->getDiaryRating()->asInt()) : null
                         )
                     );
                 }

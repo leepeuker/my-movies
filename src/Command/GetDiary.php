@@ -42,10 +42,10 @@ class GetDiary extends Command
         $movies = $this->movieRepository->findAll();
 
         foreach ($movies as $movie) {
-            $output->write($movie->getLetterboxdId() . ': ' . PHP_EOL);
+            $output->write($movie->getTitle() . ' (' . $movie->getReleaseDate()->format('Y') . '): ' . PHP_EOL);
 
             foreach ($movie->getWatchDates() as $watchDate) {
-                $output->write('- '. $watchDate->getDate()->format('Y-m-d') . ' | ' . str_repeat('*', $watchDate->getDiaryRating()->asInt()) . PHP_EOL . PHP_EOL);
+                $output->write('- ' . $watchDate->getDate()->format('Y-m-d') . ' | ' . str_repeat('*', $watchDate->getDiaryRating()->asInt()) . PHP_EOL . PHP_EOL);
             }
         }
     }

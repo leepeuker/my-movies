@@ -2,8 +2,10 @@
 
 namespace App\Entity;
 
+use App\ValueObject\DateTime;
 use App\ValueObject\ImdbId;
 use App\ValueObject\LetterboxdId;
+use App\ValueObject\Title;
 use App\ValueObject\TmdbId;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -32,6 +34,16 @@ class Movie
     private $letterboxd_id;
 
     /**
+     * @ORM\Column(type="date")
+     */
+    private $releaseDate;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $title;
+
+    /**
      * @ORM\Column(type="integer", unique=true, nullable=true)
      */
     private $tmdbId;
@@ -41,12 +53,14 @@ class Movie
      */
     private $watchDate;
 
-    public function __construct(?ImdbId $imdbId, ?LetterboxdId $letterboxdId, ?TmdbId $tmdbId)
+    public function __construct(TmdbId $tmdbId, ?ImdbId $imdbId, ?LetterboxdId $letterboxdId, Title $title, DateTime $releaseDate, ArrayCollection $watchDates)
     {
-        $this->watchDate     = new ArrayCollection();
+        $this->tmdbId        = $tmdbId->getId();
         $this->imdbId        = ($imdbId !== null) ? $imdbId->getId() : null;
         $this->letterboxd_id = ($letterboxdId !== null) ? $letterboxdId->getId() : null;
-        $this->tmdbId        = ($tmdbId !== null) ? $tmdbId->getId() : null;
+        $this->title         = (string)$title;
+        $this->releaseDate   = new \DateTime($releaseDate->format('Y-m-d'));
+        $this->watchDate     = $watchDates;
     }
 
     public function addWatchDate(WatchDate $watchDate) : self
@@ -71,6 +85,16 @@ class Movie
     public function getLetterboxdId() : ?LetterboxdId
     {
         return ($this->letterboxd_id !== null) ? LetterboxdId::createByString($this->letterboxd_id) : null;
+    }
+
+    public function getReleaseDate() : DateTime
+    {
+        return DateTime::createFromString($this->releaseDate->format('Y-m-d'));
+    }
+
+    public function getTitle() : Title
+    {
+        return Title::createFromString($this->title);
     }
 
     public function getTmdbId() : ?TmdbId
