@@ -8,6 +8,9 @@ use App\Letterboxd\Api;
 use App\Letterboxd\Resources\Diary\Item;
 use App\Letterboxd\Resources\Diary\Reader;
 use App\Repository\MovieRepository;
+use App\ValueObject\ImdbId;
+use App\ValueObject\LetterboxdId;
+use App\ValueObject\TmdbId;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -56,10 +59,11 @@ class LoadDiaryCommand extends Command
                     die(500);
                 }
 
-                $movie = new Movie();
-                $movie->setImdbId((string)$providerIds['imdb']);
-                $movie->setTmdbId((int)(string)$providerIds['tmdb']);
-                $movie->setLetterboxdId((string)$diaryItem->getLetterboxdId());
+                $movie = new Movie(
+                    ImdbId::createByString($providerIds['imdb']),
+                    LetterboxdId::createByString($diaryItem->getLetterboxdId()),
+                    TmdbId::createByString($providerIds['tmdb'])
+                );
 
 //                $output->write('Add new movie: ' . $diaryItem->getTitle() . PHP_EOL);
             }
@@ -68,7 +72,7 @@ class LoadDiaryCommand extends Command
 
             if (sizeof($watchDates) === 0) {
                 $movie->addWatchDate(
-                    new WatchDate($movie, $diaryItem->getWatchDate()->asDateTime(), $diaryItem->getRating())
+                    new WatchDate($movie, $diaryItem->getWatchDate(), $diaryItem->getRating())
                 );
 
                 $output->write(
@@ -81,12 +85,12 @@ class LoadDiaryCommand extends Command
                 );
             } else {
                 foreach ($watchDates as $watchDate) {
-                    if ($watchDate->date()->format('Y-m-d') === $diaryItem->getWatchDate()->format('Y-m-d')) {
+                    if ($watchDate->getDate()->format('Y-m-d') === $diaryItem->getWatchDate()->format('Y-m-d')) {
                         continue;
                     }
 
                     $movie->addWatchDate(
-                        new WatchDate($movie, $diaryItem->getWatchDate()->asDateTime(), $diaryItem->getRating())
+                        new WatchDate($movie, $diaryItem->getWatchDate(), $diaryItem->getRating())
                     );
 
                     $output->write(

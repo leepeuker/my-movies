@@ -2,6 +2,9 @@
 
 namespace App\Entity;
 
+use App\ValueObject\ImdbId;
+use App\ValueObject\LetterboxdId;
+use App\ValueObject\TmdbId;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -21,7 +24,7 @@ class Movie
     /**
      * @ORM\Column(type="string", unique=true,length=16, nullable=true)
      */
-    private $imdb_id;
+    private $imdbId;
 
     /**
      * @ORM\Column(type="string", unique=true, length=255, nullable=true)
@@ -31,16 +34,28 @@ class Movie
     /**
      * @ORM\Column(type="integer", unique=true, nullable=true)
      */
-    private $tmdb_id;
+    private $tmdbId;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\WatchDate", mappedBy="movie", orphanRemoval=true, cascade={"persist"})
      */
     private $watchDate;
 
-    public function __construct()
+    public function __construct(?ImdbId $imdbId, ?LetterboxdId $letterboxdId, ?TmdbId $tmdbId)
     {
-        $this->watchDate = new ArrayCollection();
+        $this->watchDate     = new ArrayCollection();
+        $this->imdbId        = ($imdbId !== null) ? $imdbId->getId() : null;
+        $this->letterboxd_id = ($imdbId !== null) ? $letterboxdId->getId() : null;
+        $this->tmdbId        = ($imdbId !== null) ? $tmdbId->getId() : null;
+    }
+
+    public function addWatchDate(WatchDate $watchDate) : self
+    {
+        if (!$this->watchDate->contains($watchDate)) {
+            $this->watchDate[] = $watchDate;
+        }
+
+        return $this;
     }
 
     public function getId() : ?int
@@ -48,68 +63,33 @@ class Movie
         return $this->id;
     }
 
-    public function getImdbId() : ?string
+    public function getImdbId() : ?ImdbId
     {
-        return $this->imdb_id;
+        return ($this->imdbId !== null) ? ImdbId::createByString($this->imdbId) : null;
     }
 
-    public function getLetterboxdId() : ?string
+    public function getLetterboxdId() : ?LetterboxdId
     {
-        return $this->letterboxd_id;
+        return ($this->letterboxd_id !== null) ? LetterboxdId::createByString($this->letterboxd_id) : null;
     }
 
-    public function getTmdbId() : ?int
+    public function getTmdbId() : ?TmdbId
     {
-        return $this->tmdb_id;
-    }
-
-    public function setImdbId(?string $imdb_id) : self
-    {
-        $this->imdb_id = $imdb_id;
-
-        return $this;
-    }
-
-    public function setLetterboxdId(?string $letterboxd_id) : self
-    {
-        $this->letterboxd_id = $letterboxd_id;
-
-        return $this;
-    }
-
-    public function setTmdbId(?int $tmdb_id) : self
-    {
-        $this->tmdb_id = $tmdb_id;
-
-        return $this;
+        return ($this->tmdbId !== null) ? TmdbId::createByString((string)$this->tmdbId) : null;
     }
 
     /**
      * @return Collection|WatchDate[]
      */
-    public function getWatchDates(): Collection
+    public function getWatchDates() : Collection
     {
         return $this->watchDate;
     }
 
-    public function addWatchDate(WatchDate $watchDate): self
-    {
-        if (!$this->watchDate->contains($watchDate)) {
-            $this->watchDate[] = $watchDate;
-            $watchDate->setMovie($this);
-        }
-
-        return $this;
-    }
-
-    public function removeWatchDate(WatchDate $watchDate): self
+    public function removeWatchDate(WatchDate $watchDate) : self
     {
         if ($this->watchDate->contains($watchDate)) {
             $this->watchDate->removeElement($watchDate);
-            // set the owning side to null (unless already changed)
-            if ($watchDate->getMovie() === $this) {
-                $watchDate->setMovie(null);
-            }
         }
 
         return $this;

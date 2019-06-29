@@ -37,7 +37,7 @@ class WatchDateRepository extends ServiceEntityRepository
     */
 
     /*
-    public function findOneBySomeField($value): ?WachtDates
+    public function findOneBySomeField($value): ?WatchDates
     {
         return $this->createQueryBuilder('w')
             ->andWhere('w.exampleField = :val')

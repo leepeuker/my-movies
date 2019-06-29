@@ -30,9 +30,4 @@ class DateTime
     {
         return $this->dateTime->format($format);
     }
-
-    public function asDateTime() : \DateTime
-    {
-        return new \DateTime($this->dateTime->format('Y-m-d H:i:s'));
-    }
 }
