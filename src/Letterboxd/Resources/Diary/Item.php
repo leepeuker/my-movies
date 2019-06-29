@@ -4,6 +4,7 @@ namespace App\Letterboxd\Resources\Diary;
 
 use App\ValueObject\DateTime;
 use App\ValueObject\LetterboxdId;
+use App\ValueObject\Rating\DiaryRating;
 use App\ValueObject\Title;
 use App\ValueObject\Year;
 
@@ -15,7 +16,7 @@ class Item extends \App\Letterboxd\Resources\Item
 
     private $watchDate;
 
-    protected function __construct(LetterboxdId $letterboxdId, Title $title, Year $year, int $rating, bool $isRewatch, DateTime $watchDate)
+    protected function __construct(LetterboxdId $letterboxdId, Title $title, Year $year, DiaryRating $rating, bool $isRewatch, DateTime $watchDate)
     {
         parent::__construct($letterboxdId, $title, $year);
 
@@ -24,12 +25,12 @@ class Item extends \App\Letterboxd\Resources\Item
         $this->watchDate = $watchDate;
     }
 
-    public static function createByParameters(LetterboxdId $letterboxdId, Title $title, Year $year, int $rating, bool $isRewatch, DateTime $watchDate) : self
+    public static function createByParameters(LetterboxdId $letterboxdId, Title $title, Year $year, DiaryRating $rating, bool $isRewatch, DateTime $watchDate) : self
     {
         return new self ($letterboxdId, $title, $year, $rating, $isRewatch, $watchDate);
     }
 
-    public function getRating() : int
+    public function getRating() : DiaryRating
     {
         return $this->rating;
     }

@@ -61,21 +61,22 @@ class LoadDiaryCommand extends Command
                 $movie->setTmdbId((int)(string)$providerIds['tmdb']);
                 $movie->setLetterboxdId((string)$diaryItem->getLetterboxdId());
 
-                $output->write('Add new movie: ' . $diaryItem->getTitle() . PHP_EOL);
+//                $output->write('Add new movie: ' . $diaryItem->getTitle() . PHP_EOL);
             }
 
             $watchDates = $movie->getWatchDates();
 
             if (sizeof($watchDates) === 0) {
                 $movie->addWatchDate(
-                    new WatchDate($movie, $diaryItem->getWatchDate()->asDateTime())
+                    new WatchDate($movie, $diaryItem->getWatchDate()->asDateTime(), $diaryItem->getRating())
                 );
 
                 $output->write(
                     sprintf(
-                        'Added movie watch date: %s - %s' . PHP_EOL,
+                        'Added: %s - %s - %s' . PHP_EOL,
                         $diaryItem->getTitle(),
-                        $diaryItem->getWatchDate()
+                        $diaryItem->getWatchDate()->format('Y-m-d'),
+                        str_repeat('*', $diaryItem->getRating()->asInt())
                     )
                 );
             } else {
@@ -85,14 +86,15 @@ class LoadDiaryCommand extends Command
                     }
 
                     $movie->addWatchDate(
-                        new WatchDate($movie, $diaryItem->getWatchDate()->asDateTime())
+                        new WatchDate($movie, $diaryItem->getWatchDate()->asDateTime(), $diaryItem->getRating())
                     );
 
                     $output->write(
                         sprintf(
-                            'Added movie watch date: %s - %s' . PHP_EOL,
+                            'Added: %s - %s - %s' . PHP_EOL,
                             $diaryItem->getTitle(),
-                            $diaryItem->getWatchDate()
+                            $diaryItem->getWatchDate()->format('Y-m-d'),
+                            str_repeat('*', $diaryItem->getRating()->asInt())
                         )
                     );
                 }

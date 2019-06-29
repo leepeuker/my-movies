@@ -4,6 +4,7 @@ namespace App\Letterboxd\Resources\Diary;
 
 use App\ValueObject\DateTime;
 use App\ValueObject\LetterboxdId;
+use App\ValueObject\Rating\DiaryRating;
 use App\ValueObject\Title;
 use App\ValueObject\Year;
 
@@ -39,7 +40,7 @@ class Mapper
             LetterboxdId::createByString($this->extractId($itemData['Letterboxd URI'])),
             Title::createFromString($itemData['Name']),
             Year::createFromInt((int)$itemData['Year']),
-            (int)$itemData['Rating'],
+            DiaryRating::createByInt((int)$itemData['Rating']),
             (bool)$itemData['Rewatch'],
             DateTime::createFromString($itemData['Watched Date'])
         );

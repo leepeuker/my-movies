@@ -2,7 +2,7 @@
 
 namespace App\Entity;
 
-use App\ValueObject\DateTime;
+use App\ValueObject\Rating\DiaryRating;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -10,6 +10,11 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class WatchDate
 {
+    /**
+     * @ORM\Column(type="smallint", nullable=true, options={"default": null})
+     */
+    private $diaryRating;
+
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()
@@ -28,15 +33,21 @@ class WatchDate
      */
     private $watchDate;
 
-    public function __construct(Movie $movie, \DateTimeInterface $watchDate)
+    public function __construct(Movie $movie, \DateTimeInterface $watchDate, ?DiaryRating $diaryRating)
     {
-        $this->movie     = $movie;
-        $this->watchDate = $watchDate;
+        $this->movie       = $movie;
+        $this->watchDate   = $watchDate;
+        $this->diaryRating = ($diaryRating !== null) ? $diaryRating->asInt() : null;
     }
 
     public function date() : ?\DateTimeInterface
     {
         return $this->watchDate;
+    }
+
+    public function getDiaryRating() : ?DiaryRating
+    {
+        return ($this->diaryRating !== null) ? DiaryRating::createByInt($this->diaryRating) : null;
     }
 
     public function getId() : ?int
@@ -52,6 +63,13 @@ class WatchDate
     public function setMovie(?Movie $movie) : self
     {
         $this->movie = $movie;
+
+        return $this;
+    }
+
+    public function setRating(?int $diaryRating) : self
+    {
+        $this->diaryRating = ($diaryRating !== null) ? DiaryRating::createByInt($diaryRating) : null;
 
         return $this;
     }
