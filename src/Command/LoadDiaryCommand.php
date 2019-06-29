@@ -64,16 +64,13 @@ class LoadDiaryCommand extends Command
                     LetterboxdId::createByString($diaryItem->getLetterboxdId()),
                     TmdbId::createByString($providerIds['tmdb'])
                 );
-
-//                $output->write('Add new movie: ' . $diaryItem->getTitle() . PHP_EOL);
             }
 
             $watchDates = $movie->getWatchDates();
 
-            if (sizeof($watchDates) === 0) {
-                $movie->addWatchDate(
-                    new WatchDate($movie, $diaryItem->getWatchDate(), $diaryItem->getRating())
-                );
+            if ($watchDates->count() === 0) {
+                $newWatchDate = new WatchDate($movie, $diaryItem->getWatchDate(), $diaryItem->getRating());
+                $movie->addWatchDate($newWatchDate);
 
                 $output->write(
                     sprintf(
@@ -84,14 +81,17 @@ class LoadDiaryCommand extends Command
                     )
                 );
             } else {
+                $exists = false;
                 foreach ($watchDates as $watchDate) {
                     if ($watchDate->getDate()->format('Y-m-d') === $diaryItem->getWatchDate()->format('Y-m-d')) {
+                        $exists = true;
                         continue;
                     }
+                }
 
-                    $movie->addWatchDate(
-                        new WatchDate($movie, $diaryItem->getWatchDate(), $diaryItem->getRating())
-                    );
+                if ($exists === false) {
+                    $newWatchDate = new WatchDate($movie, $diaryItem->getWatchDate(), $diaryItem->getRating());
+                    $movie->addWatchDate($newWatchDate);
 
                     $output->write(
                         sprintf(
