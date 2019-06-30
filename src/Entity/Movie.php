@@ -84,7 +84,7 @@ class Movie
 
     public function getLetterboxdId() : ?LetterboxdId
     {
-        return ($this->letterboxd_id !== null) ? LetterboxdId::createByString($this->letterboxd_id) : null;
+        return ($this->letterboxd_id !== null) ? LetterboxdId::createFromString($this->letterboxd_id) : null;
     }
 
     public function getReleaseDate() : DateTime

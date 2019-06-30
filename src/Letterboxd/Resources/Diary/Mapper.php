@@ -37,7 +37,7 @@ class Mapper
     private function mapToItem($itemData) : Item
     {
         return Item::createByParameters(
-            LetterboxdId::createByString($this->extractId($itemData['Letterboxd URI'])),
+            LetterboxdId::createFromString($this->extractId($itemData['Letterboxd URI'])),
             Title::createFromString($itemData['Name']),
             Year::createFromInt((int)$itemData['Year']),
             ($itemData['Rating'] !== '') ? DiaryRating::createByInt((int)$itemData['Rating']) : null,

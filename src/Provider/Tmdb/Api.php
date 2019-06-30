@@ -2,8 +2,8 @@
 
 namespace App\Provider\Tmdb;
 
+use App\Provider\Tmdb;
 use App\ValueObject\TmdbId;
-use Tmdb\Api\Movies;
 
 class Api
 {
@@ -15,8 +15,8 @@ class Api
         $this->client = new \Tmdb\Client($token);
     }
 
-    public function getMovie(TmdbId $tmdbId) : array
+    public function getMovie(TmdbId $tmdbId) : Tmdb\Resources\Movie
     {
-        return $this->client->getMoviesApi()->getMovie($tmdbId);
+        return Tmdb\Resources\Movie::createFromArray($this->client->getMoviesApi()->getMovie($tmdbId));
     }
 }

@@ -58,7 +58,6 @@ class LoadDiaryCommand extends Command
         foreach ($diaryItemList as $diaryItem) {
             $movie = $this->movieRepository->findOneBy(['letterboxd_id' => $diaryItem->getLetterboxdId()]);
 
-
             if ($movie === null) {
                 try {
                     $providerIds = $this->letterboxdApi->getProviderIdsByLetterboxdId($diaryItem->getLetterboxdId());
@@ -72,9 +71,9 @@ class LoadDiaryCommand extends Command
                 $movie = new Movie(
                     TmdbId::createByString($providerIds['tmdb']),
                     ImdbId::createByString($providerIds['imdb']),
-                    LetterboxdId::createByString($diaryItem->getLetterboxdId()),
-                    Title::createFromString($tmdbMovie['title']),
-                    DateTime::createFromString($tmdbMovie['release_date']),
+                    LetterboxdId::createFromString($diaryItem->getLetterboxdId()),
+                    Title::createFromString($tmdbMovie->getTitle()),
+                    DateTime::createFromString($tmdbMovie->getReleaseDate()),
                     new ArrayCollection()
                 );
             }

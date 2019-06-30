@@ -13,7 +13,7 @@ class LetterboxdId
         $this->id = $id;
     }
 
-    public static function createByString(string $id) : self
+    public static function createFromString(string $id) : self
     {
         return new self($id);
     }
