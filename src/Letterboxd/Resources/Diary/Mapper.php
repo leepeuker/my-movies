@@ -2,7 +2,7 @@
 
 namespace App\Letterboxd\Resources\Diary;
 
-use App\ValueObject\DateTime;
+use App\ValueObject\Date;
 use App\ValueObject\LetterboxdId;
 use App\ValueObject\Rating\DiaryRating;
 use App\ValueObject\Title;
@@ -42,7 +42,7 @@ class Mapper
             Year::createFromInt((int)$itemData['Year']),
             ($itemData['Rating'] !== '') ? DiaryRating::createByInt((int)$itemData['Rating']) : null,
             (bool)$itemData['Rewatch'],
-            DateTime::createFromString($itemData['Watched Date'])
+            Date::createFromString($itemData['Watched Date'])
         );
     }
 }

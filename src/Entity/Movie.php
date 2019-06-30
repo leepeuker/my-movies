@@ -2,11 +2,11 @@
 
 namespace App\Entity;
 
-use App\ValueObject\DateTime;
+use App\ValueObject\Id;
 use App\ValueObject\ImdbId;
 use App\ValueObject\LetterboxdId;
+use App\ValueObject\Date;
 use App\ValueObject\Title;
-use App\ValueObject\TmdbId;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -16,6 +16,11 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Movie
 {
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\Genre", inversedBy="movies", cascade={"persist"})
+     */
+    private $genres;
+
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()
@@ -53,14 +58,32 @@ class Movie
      */
     private $watchDate;
 
-    public function __construct(TmdbId $tmdbId, ?ImdbId $imdbId, ?LetterboxdId $letterboxdId, Title $title, DateTime $releaseDate, ArrayCollection $watchDates)
-    {
+    public function __construct(
+        Id $tmdbId,
+        ?ImdbId $imdbId,
+        ?LetterboxdId $letterboxdId,
+        Title $title,
+        Date $releaseDate,
+        ArrayCollection $watchDates,
+        ArrayCollection $genres
+    ) {
         $this->tmdbId        = $tmdbId->getId();
         $this->imdbId        = ($imdbId !== null) ? $imdbId->getId() : null;
         $this->letterboxd_id = ($letterboxdId !== null) ? $letterboxdId->getId() : null;
         $this->title         = (string)$title;
-        $this->releaseDate   = new \DateTime($releaseDate->format('Y-m-d'));
+        $this->releaseDate   = $releaseDate->asDateTime();
         $this->watchDate     = $watchDates;
+        $this->genres        = $genres;
+    }
+
+    public function addGenre(Genre $genre) : self
+    {
+        if (!$this->genres->contains($genre)) {
+            $this->genres[] = $genre;
+            $genre->addMovie($this);
+        }
+
+        return $this;
     }
 
     public function addWatchDate(WatchDate $watchDate) : self
@@ -72,14 +95,22 @@ class Movie
         return $this;
     }
 
-    public function getId() : ?int
+    /**
+     * @return Collection|Genre[]
+     */
+    public function getGenres() : Collection
     {
-        return $this->id;
+        return $this->genres;
+    }
+
+    public function getId() : Id
+    {
+        return Id::createFromInt($this->id);
     }
 
     public function getImdbId() : ?ImdbId
     {
-        return ($this->imdbId !== null) ? ImdbId::createByString($this->imdbId) : null;
+        return ($this->imdbId !== null) ? ImdbId::createFromString($this->imdbId) : null;
     }
 
     public function getLetterboxdId() : ?LetterboxdId
@@ -87,9 +118,9 @@ class Movie
         return ($this->letterboxd_id !== null) ? LetterboxdId::createFromString($this->letterboxd_id) : null;
     }
 
-    public function getReleaseDate() : DateTime
+    public function getReleaseDate() : Date
     {
-        return DateTime::createFromString($this->releaseDate->format('Y-m-d'));
+        return Date::createFromString($this->releaseDate->format('Y-m-d'));
     }
 
     public function getTitle() : Title
@@ -97,9 +128,9 @@ class Movie
         return Title::createFromString($this->title);
     }
 
-    public function getTmdbId() : ?TmdbId
+    public function getTmdbId() : ?Id
     {
-        return ($this->tmdbId !== null) ? TmdbId::createByString((string)$this->tmdbId) : null;
+        return ($this->tmdbId !== null) ? Id::createFromString((string)$this->tmdbId) : null;
     }
 
     /**
@@ -108,6 +139,16 @@ class Movie
     public function getWatchDates() : Collection
     {
         return $this->watchDate;
+    }
+
+    public function removeGenre(Genre $genre) : self
+    {
+        if ($this->genres->contains($genre)) {
+            $this->genres->removeElement($genre);
+            $genre->removeMovie($this);
+        }
+
+        return $this;
     }
 
     public function removeWatchDate(WatchDate $watchDate) : self

@@ -5,9 +5,9 @@ namespace App\Letterboxd;
 use App\Provider\Imdb;
 use App\Provider\Provider;
 use App\Provider\Tmdb;
+use App\ValueObject\Id;
 use App\ValueObject\ImdbId;
 use App\ValueObject\LetterboxdId;
-use App\ValueObject\TmdbId;
 use Symfony\Component\HttpClient\HttpClient;
 
 class Api
@@ -19,10 +19,10 @@ class Api
         $page = $this->fetchPageById($letterboxdId);
 
         return [
-            'imdb' => ImdbId::createByString(
+            'imdb' => ImdbId::createFromString(
                 $this->getProviderIdByPageAndPattern($page, Imdb\Provider::create())
             ),
-            'tmdb' => TmdbId::createByString(
+            'tmdb' => Id::createFromString(
                 $this->getProviderIdByPageAndPattern($page, Tmdb\Provider::create())
             ),
         ];

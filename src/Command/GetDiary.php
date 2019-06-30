@@ -42,17 +42,21 @@ class GetDiary extends Command
         $movies = $this->movieRepository->findBy([], ['title' => 'ASC']);
 
         foreach ($movies as $movie) {
-            $output->write($movie->getTitle() . ' (' . $movie->getReleaseDate()->format('Y') . '): ' . PHP_EOL);
+            $genresString = '';
+            foreach ($movie->getGenres() as $genre) {
+                $genresString .= $genre->getName() . ', ';
+            }
+
+            $output->write($movie->getTitle() . ' (' . $movie->getReleaseDate()->getYear() . ') [' . rtrim($genresString, ', ') . ']: ' . PHP_EOL);
 
             foreach ($movie->getWatchDates() as $watchDate) {
-
                 if ($watchDate->getDiaryRating() !== null) {
                     $ratingStars = $watchDate->getDiaryRating()->getAsStars();
                 } else {
-                    $ratingStars = '-';
+                    $ratingStars = ' - ';
                 }
 
-                $output->write('- ' . $watchDate->getDate()->format('Y-m-d') . ' | ' . $ratingStars . PHP_EOL);
+                $output->write(' - ' . $watchDate->getDate() . ' | ' . $ratingStars . PHP_EOL);
             }
         }
     }

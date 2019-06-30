@@ -13,7 +13,7 @@ class ImdbId
         $this->id = $id;
     }
 
-    public static function createByString(string $id) : self
+    public static function createFromString(string $id) : self
     {
         return new self($id);
     }
@@ -25,7 +25,7 @@ class ImdbId
 
     private function ensureValidImdbId(string $id)
     {
-        if (ctype_alnum($id) === false) {
+        if ((bool)preg_match('/^tt[0-9]{7}/', $id) === false) {
             throw new \Exception('Format of id is invalid: ' . $id);
         }
     }

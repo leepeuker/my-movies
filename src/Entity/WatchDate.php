@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\ValueObject\Date;
 use App\ValueObject\DateTime;
 use App\ValueObject\Rating\DiaryRating;
 use Doctrine\ORM\Mapping as ORM;
@@ -34,16 +35,16 @@ class WatchDate
      */
     private $watchDate;
 
-    public function __construct(Movie $movie, DateTime $watchDate, ?DiaryRating $diaryRating)
+    public function __construct(Movie $movie, Date $watchDate, ?DiaryRating $diaryRating)
     {
         $this->movie       = $movie;
-        $this->watchDate   = new \DateTime($watchDate);
+        $this->watchDate   = $watchDate->asDateTime();
         $this->diaryRating = ($diaryRating !== null) ? $diaryRating->asInt() : null;
     }
 
-    public function getDate() : DateTime
+    public function getDate() : Date
     {
-        return DateTime::createFromString($this->watchDate->format('Y-m-d H:i:s'));
+        return Date::createFromString($this->watchDate->format('Y-m-d'));
     }
 
     public function getDiaryRating() : ?DiaryRating
