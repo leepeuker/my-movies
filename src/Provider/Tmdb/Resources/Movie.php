@@ -3,8 +3,8 @@
 namespace App\Provider\Tmdb\Resources;
 
 use App\Provider\Tmdb\ValueObject\Status;
-use App\ValueObject\Id;
 use App\ValueObject\Date;
+use App\ValueObject\Id;
 use App\ValueObject\Title;
 
 class Movie
@@ -20,6 +20,8 @@ class Movie
     private $original_language;
 
     private $overview;
+
+    private $productionCompanies;
 
     private $rating;
 
@@ -45,24 +47,26 @@ class Movie
         Date $releaseDate,
         int $budget,
         GenreList $genreList,
+        ProductionCompanyList $productionCompanies,
         int $revenue,
         ?int $runtime,
         Status $status,
         float $rating
     ) {
-        $this->id                = $id;
-        $this->title             = $title;
-        $this->originalTitle     = $originalTitle;
-        $this->original_language = $originalLanguage;
-        $this->releaseDate       = $releaseDate;
-        $this->budget            = $budget;
-        $this->genreList         = $genreList;
-        $this->runtime           = $runtime;
-        $this->status            = $status;
-        $this->rating            = $rating;
-        $this->revenue           = $revenue;
-        $this->tagline           = $tagline;
-        $this->overview          = $overview;
+        $this->id                  = $id;
+        $this->title               = $title;
+        $this->originalTitle       = $originalTitle;
+        $this->original_language   = $originalLanguage;
+        $this->releaseDate         = $releaseDate;
+        $this->budget              = $budget;
+        $this->genreList           = $genreList;
+        $this->productionCompanies = $productionCompanies;
+        $this->runtime             = $runtime;
+        $this->status              = $status;
+        $this->rating              = $rating;
+        $this->revenue             = $revenue;
+        $this->tagline             = $tagline;
+        $this->overview            = $overview;
     }
 
     public static function createFromArray(array $data) : self
@@ -77,6 +81,7 @@ class Movie
             Date::createFromString($data['release_date']),
             $data['budget'],
             GenreList::createFromArray($data['genres']),
+            ProductionCompanyList::createFromArray($data['production_companies']),
             $data['revenue'],
             empty($data['runtime']) ? null : $data['runtime'],
             Status::createFromString($data['status']),
@@ -112,6 +117,11 @@ class Movie
     public function getOverview() : string
     {
         return $this->overview;
+    }
+
+    public function getProductionCompanies() : ProductionCompanyList
+    {
+        return $this->productionCompanies;
     }
 
     public function getRating() : float

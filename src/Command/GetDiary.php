@@ -46,8 +46,22 @@ class GetDiary extends Command
             foreach ($movie->getGenres() as $genre) {
                 $genresString .= $genre->getName() . ', ';
             }
+            $productionCompaniesString = '';
+            foreach ($movie->getProductionCompanies() as $productionCompany) {
+                $productionCompaniesString .= $productionCompany->getName() . ', ';
+            }
 
-            $output->write($movie->getTitle() . ' (' . $movie->getReleaseDate()->getYear() . ') [' . rtrim($genresString, ', ') . ']: ' . PHP_EOL);
+            $output->write(
+                $movie->getTitle() .
+                ' (' .
+                $movie->getReleaseDate()->getYear() .
+                ') [' .
+                rtrim($genresString, ', ') .
+                '] {' .
+                rtrim($productionCompaniesString, ', ') .
+                '}: ' .
+                PHP_EOL
+            );
 
             foreach ($movie->getWatchDates() as $watchDate) {
                 if ($watchDate->getDiaryRating() !== null) {

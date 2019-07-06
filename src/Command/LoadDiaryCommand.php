@@ -4,6 +4,7 @@ namespace App\Command;
 
 use App\Entity\Genre;
 use App\Entity\Movie;
+use App\Entity\ProductionCompany;
 use App\Entity\WatchDate;
 use App\Letterboxd;
 use App\Letterboxd\Resources\Diary\Item;
@@ -11,6 +12,7 @@ use App\Letterboxd\Resources\Diary\Reader;
 use App\Provider\Tmdb;
 use App\Repository\GenreRepository;
 use App\Repository\MovieRepository;
+use App\Repository\ProductionCompanyRepository;
 use App\ValueObject\Id;
 use App\ValueObject\ImdbId;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -33,19 +35,28 @@ class LoadDiaryCommand extends Command
 
     private          $movieRepository;
 
+    private          $productionCompanyRepository;
+
     private          $tmdbApi;
 
     public function __construct(
-        EntityManagerInterface $em, MovieRepository $movieRepository, GenreRepository $genreRepository, Reader $diaryReader, Letterboxd\Api $letterboxApi, Tmdb\Api $tmdbApi
+        EntityManagerInterface $em,
+        MovieRepository $movieRepository,
+        GenreRepository $genreRepository,
+        ProductionCompanyRepository $productionCompanyRepository,
+        Reader $diaryReader,
+        Letterboxd\Api $letterboxApi,
+        Tmdb\Api $tmdbApi
     ) {
         parent::__construct();
 
-        $this->letterboxdApi   = $letterboxApi;
-        $this->diaryReader     = $diaryReader;
-        $this->movieRepository = $movieRepository;
-        $this->em              = $em;
-        $this->tmdbApi         = $tmdbApi;
-        $this->genreRepository = $genreRepository;
+        $this->letterboxdApi               = $letterboxApi;
+        $this->diaryReader                 = $diaryReader;
+        $this->movieRepository             = $movieRepository;
+        $this->em                          = $em;
+        $this->tmdbApi                     = $tmdbApi;
+        $this->genreRepository             = $genreRepository;
+        $this->productionCompanyRepository = $productionCompanyRepository;
     }
 
     protected function configure()
@@ -78,21 +89,18 @@ class LoadDiaryCommand extends Command
                     $tmdbMovie->getTitle(),
                     $tmdbMovie->getReleaseDate(),
                     new ArrayCollection(),
+                    new ArrayCollection(),
                     new ArrayCollection()
                 );
 
                 /** @var Tmdb\Resources\Genre $genre */
-                foreach ($tmdbMovie->getGenres() as $gtmdbGenre) {
-                    $genre = $this->genreRepository->findOneBy(['name' => $gtmdbGenre->getName()]);
+                foreach ($tmdbMovie->getGenres() as $tmdbGenre) {
+                    $movie->addGenre($this->getGenre($tmdbGenre));
+                }
 
-                    if ($genre === null) {
-                        $genre = new Genre(
-                            $gtmdbGenre->getName(),
-                            new ArrayCollection()
-                        );
-                    }
-
-                    $movie->addGenre($genre);
+                /** @var Tmdb\Resources\ProductionCompany $genre */
+                foreach ($tmdbMovie->getProductionCompanies() as $tmdbProductionCompany) {
+                    $movie->addProductionCompany($this->getProductionCompany($tmdbProductionCompany));
                 }
             }
 
@@ -137,5 +145,34 @@ class LoadDiaryCommand extends Command
             $this->em->persist($movie);
             $this->em->flush();
         }
+    }
+
+    private function getGenre(Tmdb\Resources\Genre $gtmdbGenre) : Genre
+    {
+        $genre = $this->genreRepository->findOneBy(['name' => $gtmdbGenre->getName()]);
+
+        if ($genre === null) {
+            $genre = new Genre(
+                $gtmdbGenre->getName(),
+                new ArrayCollection()
+            );
+        }
+
+        return $genre;
+    }
+
+    private function getProductionCompany(Tmdb\Resources\ProductionCompany $tmdbProductionCompany) : ProductionCompany
+    {
+        $productionCompany = $this->productionCompanyRepository->findOneBy(['name' => $tmdbProductionCompany->getName()]);
+
+        if ($productionCompany === null) {
+            $productionCompany = new ProductionCompany(
+                $tmdbProductionCompany->getName(),
+                new ArrayCollection(),
+                $tmdbProductionCompany->getOriginCountry()
+            );
+        }
+
+        return $productionCompany;
     }
 }

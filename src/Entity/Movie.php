@@ -2,10 +2,10 @@
 
 namespace App\Entity;
 
+use App\ValueObject\Date;
 use App\ValueObject\Id;
 use App\ValueObject\ImdbId;
 use App\ValueObject\LetterboxdId;
-use App\ValueObject\Date;
 use App\ValueObject\Title;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -39,6 +39,11 @@ class Movie
     private $letterboxd_id;
 
     /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\ProductionCompany", inversedBy="Movie", cascade={"persist"})
+     */
+    private $productionCompanies;
+
+    /**
      * @ORM\Column(type="date")
      */
     private $releaseDate;
@@ -65,15 +70,17 @@ class Movie
         Title $title,
         Date $releaseDate,
         ArrayCollection $watchDates,
-        ArrayCollection $genres
+        ArrayCollection $genres,
+        ArrayCollection $productionCompanies
     ) {
-        $this->tmdbId        = $tmdbId->getId();
-        $this->imdbId        = ($imdbId !== null) ? $imdbId->getId() : null;
-        $this->letterboxd_id = ($letterboxdId !== null) ? $letterboxdId->getId() : null;
-        $this->title         = (string)$title;
-        $this->releaseDate   = $releaseDate->asDateTime();
-        $this->watchDate     = $watchDates;
-        $this->genres        = $genres;
+        $this->tmdbId              = $tmdbId->getId();
+        $this->imdbId              = ($imdbId !== null) ? $imdbId->getId() : null;
+        $this->letterboxd_id       = ($letterboxdId !== null) ? $letterboxdId->getId() : null;
+        $this->title               = (string)$title;
+        $this->releaseDate         = $releaseDate->asDateTime();
+        $this->watchDate           = $watchDates;
+        $this->genres              = $genres;
+        $this->productionCompanies = $productionCompanies;
     }
 
     public function addGenre(Genre $genre) : self
@@ -81,6 +88,16 @@ class Movie
         if (!$this->genres->contains($genre)) {
             $this->genres[] = $genre;
             $genre->addMovie($this);
+        }
+
+        return $this;
+    }
+
+    public function addProductionCompany(ProductionCompany $productionCompany) : self
+    {
+        if (!$this->productionCompanies->contains($productionCompany)) {
+            $this->productionCompanies[] = $productionCompany;
+            $productionCompany->addMovie($this);
         }
 
         return $this;
@@ -118,6 +135,14 @@ class Movie
         return ($this->letterboxd_id !== null) ? LetterboxdId::createFromString($this->letterboxd_id) : null;
     }
 
+    /**
+     * @return Collection|ProductionCompany[]
+     */
+    public function getProductionCompanies() : Collection
+    {
+        return $this->productionCompanies;
+    }
+
     public function getReleaseDate() : Date
     {
         return Date::createFromString($this->releaseDate->format('Y-m-d'));
@@ -146,6 +171,16 @@ class Movie
         if ($this->genres->contains($genre)) {
             $this->genres->removeElement($genre);
             $genre->removeMovie($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProductionCompany(ProductionCompany $productionCompany) : self
+    {
+        if ($this->productionCompanies->contains($productionCompany)) {
+            $this->productionCompanies->removeElement($productionCompany);
+            $productionCompany->removeMovie($this);
         }
 
         return $this;
