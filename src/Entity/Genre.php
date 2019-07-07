@@ -2,8 +2,7 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use App\ValueObject\Id;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -28,45 +27,30 @@ class Genre
      */
     private $name;
 
-    public function __construct(string $name, ArrayCollection $movies)
+    public function __construct(string $name, MovieList $movies)
     {
         $this->name   = $name;
-        $this->movies = $movies;
+        $this->movies = $movies->asArrayCollection();
     }
 
-    public function addMovie(Movie $movie) : self
+    public function getId() : ?Id
     {
-        if (!$this->movies->contains($movie)) {
-            $this->movies[] = $movie;
+        return ($this->id !== null) ? Id::createFromInt($this->id) : null;
+    }
+
+    public function getMovies() : MovieList
+    {
+        $movieList = MovieList::create();
+        /** @var Movie $movie */
+        foreach ($this->movies as $movie) {
+            $movieList->add($movie);
         }
 
-        return $this;
-    }
-
-    public function getId() : ?int
-    {
-        return $this->id;
-    }
-
-    /**
-     * @return Collection|Movie[]
-     */
-    public function getMovies() : Collection
-    {
-        return $this->movies;
+        return $movieList;
     }
 
     public function getName() : string
     {
         return $this->name;
-    }
-
-    public function removeMovie(Movie $movie) : self
-    {
-        if ($this->movies->contains($movie)) {
-            $this->movies->removeElement($movie);
-        }
-
-        return $this;
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\ValueObject\Id;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -34,20 +33,11 @@ class ProductionCompany
      */
     private $name;
 
-    public function __construct(string $name, ArrayCollection $movies, string $country)
+    public function __construct(string $name, MovieList $movies, string $country)
     {
         $this->name    = $name;
-        $this->movies  = $movies;
+        $this->movies  = $movies->asArrayCollection();
         $this->country = $country;
-    }
-
-    public function addMovie(Movie $movie) : self
-    {
-        if (!$this->movies->contains($movie)) {
-            $this->movies[] = $movie;
-        }
-
-        return $this;
     }
 
     public function getCountry() : ?string
@@ -55,14 +45,20 @@ class ProductionCompany
         return $this->country;
     }
 
-    public function getId() : Id
+    public function getId() : ?Id
     {
-        return Id::createFromInt($this->id);
+        return ($this->id !== null) ? Id::createFromInt($this->id) : null;
     }
 
-    public function getMovies() : Collection
+    public function getMovies() : MovieList
     {
-        return $this->movies;
+        $movieList = MovieList::create();
+        /** @var Movie $movie */
+        foreach ($this->movies as $movie) {
+            $movieList->add($movie);
+        }
+
+        return $movieList;
     }
 
     public function getName() : string

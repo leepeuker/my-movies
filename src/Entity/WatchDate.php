@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\ValueObject\Date;
+use App\ValueObject\Id;
 use App\ValueObject\Rating\DiaryRating;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -51,9 +52,9 @@ class WatchDate
         return ($this->diaryRating !== null) ? DiaryRating::createByInt($this->diaryRating) : null;
     }
 
-    public function getId() : ?int
+    public function getId() : ?Id
     {
-        return $this->id;
+        return ($this->id !== null) ? Id::createFromInt($this->id) : null;
     }
 
     public function getMovie() : ?Movie

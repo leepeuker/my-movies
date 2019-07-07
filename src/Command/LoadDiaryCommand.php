@@ -5,6 +5,7 @@ namespace App\Command;
 use App\Entity\Genre;
 use App\Entity\GenreList;
 use App\Entity\Movie;
+use App\Entity\MovieList;
 use App\Entity\ProductionCompany;
 use App\Entity\ProductionCompanyList;
 use App\Entity\WatchDate;
@@ -74,7 +75,7 @@ class LoadDiaryCommand extends Command
         /** @var Item $diaryItem */
         foreach ($diaryItemList as $diaryItem) {
             try {
-                $movie = $this->createMovieFromDiaryItem($diaryItem);
+                $movie = $this->getMovieFromDiaryItem($diaryItem);
             } catch (\Exception $e) {
                 echo $e . PHP_EOL;
                 die(500);
@@ -131,7 +132,7 @@ class LoadDiaryCommand extends Command
         return $movie;
     }
 
-    private function createMovieFromDiaryItem(Item $diaryItem) : Movie
+    private function getMovieFromDiaryItem(Item $diaryItem) : Movie
     {
         $movie = $this->movieRepository->findOneBy(['letterboxd_id' => $diaryItem->getLetterboxdId()]);
 
@@ -164,7 +165,7 @@ class LoadDiaryCommand extends Command
         if ($genre === null) {
             $genre = new Genre(
                 $gtmdbGenre->getName(),
-                new ArrayCollection()
+                MovieList::create()
             );
         }
 
@@ -178,7 +179,7 @@ class LoadDiaryCommand extends Command
         if ($productionCompany === null) {
             $productionCompany = new ProductionCompany(
                 $tmdbProductionCompany->getName(),
-                new ArrayCollection(),
+                MovieList::create(),
                 $tmdbProductionCompany->getOriginCountry()
             );
         }

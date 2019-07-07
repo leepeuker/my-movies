@@ -140,9 +140,9 @@ class Movie
         return $genreList;
     }
 
-    public function getId() : Id
+    public function getId() : ?Id
     {
-        return Id::createFromInt($this->id);
+        return ($this->id !== null) ? Id::createFromInt($this->id) : null;
     }
 
     public function getImdbId() : ?ImdbId
