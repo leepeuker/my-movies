@@ -19,9 +19,4 @@ class Api
     {
         return Tmdb\Resources\Movie::createFromArray($this->client->getMoviesApi()->getMovie($tmdbId));
     }
-
-    public function getMovieCast(Id $tmdbId) : Tmdb\Resources\Credits
-    {
-        return Tmdb\Resources\Credits::createFromArray($this->client->getMoviesApi()->getCredits($tmdbId));
-    }
 }

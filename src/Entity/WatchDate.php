@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\ValueObject\Date;
-use App\ValueObject\DateTime;
 use App\ValueObject\Rating\DiaryRating;
 use Doctrine\ORM\Mapping as ORM;
 

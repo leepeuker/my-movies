@@ -3,9 +3,12 @@
 namespace App\Command;
 
 use App\Entity\Genre;
+use App\Entity\GenreList;
 use App\Entity\Movie;
 use App\Entity\ProductionCompany;
+use App\Entity\ProductionCompanyList;
 use App\Entity\WatchDate;
+use App\Entity\WatchDateList;
 use App\Letterboxd;
 use App\Letterboxd\Resources\Diary\Item;
 use App\Letterboxd\Resources\Diary\Reader;
@@ -70,81 +73,88 @@ class LoadDiaryCommand extends Command
 
         /** @var Item $diaryItem */
         foreach ($diaryItemList as $diaryItem) {
-            $movie = $this->movieRepository->findOneBy(['letterboxd_id' => $diaryItem->getLetterboxdId()]);
-
-            if ($movie === null) {
-                try {
-                    $providerIds = $this->letterboxdApi->getProviderIdsByLetterboxdId($diaryItem->getLetterboxdId());
-                } catch (\Exception $e) {
-                    echo $e . PHP_EOL;
-                    die(500);
-                }
-
-                $tmdbMovie = $this->tmdbApi->getMovie(Id::createFromString($providerIds['tmdb']));
-
-                $movie = new Movie(
-                    Id::createFromString($providerIds['tmdb']),
-                    ImdbId::createFromString($providerIds['imdb']),
-                    $diaryItem->getLetterboxdId(),
-                    $tmdbMovie->getTitle(),
-                    $tmdbMovie->getReleaseDate(),
-                    new ArrayCollection(),
-                    new ArrayCollection(),
-                    new ArrayCollection()
-                );
-
-                /** @var Tmdb\Resources\Genre $genre */
-                foreach ($tmdbMovie->getGenres() as $tmdbGenre) {
-                    $movie->addGenre($this->getGenre($tmdbGenre));
-                }
-
-                /** @var Tmdb\Resources\ProductionCompany $genre */
-                foreach ($tmdbMovie->getProductionCompanies() as $tmdbProductionCompany) {
-                    $movie->addProductionCompany($this->getProductionCompany($tmdbProductionCompany));
-                }
+            try {
+                $movie = $this->createMovieFromDiaryItem($diaryItem);
+            } catch (\Exception $e) {
+                echo $e . PHP_EOL;
+                die(500);
             }
 
-            $watchDates = $movie->getWatchDates();
+            $watchDate = new WatchDate($movie, $diaryItem->getWatchDate(), $diaryItem->getRating());
 
-            if ($watchDates->count() === 0) {
-                $newWatchDate = new WatchDate($movie, $diaryItem->getWatchDate(), $diaryItem->getRating());
-                $movie->addWatchDate($newWatchDate);
+            $messageFormat = 'Created: %s - %s - %s' . PHP_EOL;
+            if ($movie->getWatchDates()->has($watchDate) === true) {
+                $messageFormat = 'Updated: %s - %s - %s' . PHP_EOL;
 
-                $output->write(
-                    sprintf(
-                        'Added: %s - %s - %s' . PHP_EOL,
-                        $movie->getTitle(),
-                        $newWatchDate->getDate(),
-                        ($newWatchDate->getDiaryRating() !== null) ? $newWatchDate->getDiaryRating()->getAsStars() : null
-                    )
-                );
-            } else {
-                $exists = false;
-                foreach ($watchDates as $watchDate) {
-                    if ((string)$watchDate->getDate() === (string)$diaryItem->getWatchDate()) {
-                        $exists = true;
-                        continue;
-                    }
-                }
-
-                if ($exists === false) {
-                    $newWatchDate = new WatchDate($movie, $diaryItem->getWatchDate(), $diaryItem->getRating());
-                    $movie->addWatchDate($newWatchDate);
-
-                    $output->write(
-                        sprintf(
-                            'Added: %s - %s - %s' . PHP_EOL,
-                            $movie->getTitle(),
-                            $newWatchDate->getDate(),
-                            ($newWatchDate->getDiaryRating() !== null) ? $newWatchDate->getDiaryRating()->getAsStars() : null
-                        )
-                    );
-                }
+                $movie->removeWatchDate($watchDate);
+                $this->em->flush();
             }
 
-            $this->em->persist($movie);
+            $movie->addWatchDate($watchDate);
             $this->em->flush();
+
+            $output->write(
+                sprintf(
+                    $messageFormat,
+                    $movie->getTitle(),
+                    $watchDate->getDate(),
+                    ($watchDate->getDiaryRating() !== null) ? $watchDate->getDiaryRating()->getAsStars() : null
+                )
+            );
         }
+    }
+
+    private function createGenreList(Tmdb\Resources\Movie $tmdbMovie) : GenreList
+    {
+        /** @var Tmdb\Resources\Genre $genre */
+        $genreList = GenreList::create();
+        foreach ($tmdbMovie->getGenres() as $tmdbGenre) {
+            $genreList->add($this->getGenre($tmdbGenre));
+        }
+
+        return $genreList;
+    }
+
+    private function createMovie(array $providerIds, Item $diaryItem, Tmdb\Resources\Movie $tmdbMovie) : Movie
+    {
+        $movie = new Movie(
+            Id::createFromString($providerIds['tmdb']),
+            ImdbId::createFromString($providerIds['imdb']),
+            $diaryItem->getLetterboxdId(),
+            $tmdbMovie->getTitle(),
+            $tmdbMovie->getReleaseDate(),
+            WatchDateList::create(),
+            $this->createGenreList($tmdbMovie),
+            $this->createProductionCompanyList($tmdbMovie)
+        );
+
+        return $movie;
+    }
+
+    private function createMovieFromDiaryItem(Item $diaryItem) : Movie
+    {
+        $movie = $this->movieRepository->findOneBy(['letterboxd_id' => $diaryItem->getLetterboxdId()]);
+
+        if ($movie === null) {
+            $providerIds = $this->letterboxdApi->getProviderIdsByLetterboxdId($diaryItem->getLetterboxdId());
+            $tmdbMovie   = $this->tmdbApi->getMovie(Id::createFromString($providerIds['tmdb']));
+            $movie       = $this->createMovie($providerIds, $diaryItem, $tmdbMovie);
+        }
+
+        $this->em->persist($movie);
+
+        return $movie;
+    }
+
+    private function createProductionCompanyList(Tmdb\Resources\Movie $tmdbMovie) : ProductionCompanyList
+    {
+        /** @var Tmdb\Resources\ProductionCompany $genre */
+        $productionCompanyList = ProductionCompanyList::create();
+        foreach ($tmdbMovie->getProductionCompanies() as $tmdbProductionCompany) {
+            $productionCompanyList->add($this->getProductionCompany($tmdbProductionCompany));
+        }
+
+        return $productionCompanyList;
     }
 
     private function getGenre(Tmdb\Resources\Genre $gtmdbGenre) : Genre

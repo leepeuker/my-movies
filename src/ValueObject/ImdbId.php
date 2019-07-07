@@ -25,7 +25,7 @@ class ImdbId
 
     private function ensureValidImdbId(string $id)
     {
-        if ((bool)preg_match('/^tt[0-9]{7}/', $id) === false) {
+        if ((bool)preg_match('/^tt[0-9]{7}/', $id) === false && (bool)preg_match('/^nm[0-9]{7}/', $id) === false) {
             throw new \Exception('Format of id is invalid: ' . $id);
         }
     }

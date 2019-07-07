@@ -4,7 +4,7 @@ namespace App\Provider\Tmdb\Resources;
 
 use App\AbstractList;
 
-class GenreList extends AbstractList
+class Cast extends AbstractList
 {
     public static function create() : self
     {
@@ -16,14 +16,14 @@ class GenreList extends AbstractList
         $genreList = self::create();
 
         foreach ($items as $item) {
-            $genreList->add(Genre::createFromArray($item));
+            $genreList->add(CastMember::createFromArray($item));
         }
 
         return $genreList;
     }
 
-    public function add(Genre $genre) : void
+    public function add(CastMember $slug) : void
     {
-        $this->data[] = $genre;
+        $this->data[] = $slug;
     }
 }

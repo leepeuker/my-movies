@@ -7,8 +7,6 @@ use App\ValueObject\Id;
 use App\ValueObject\ImdbId;
 use App\ValueObject\LetterboxdId;
 use App\ValueObject\Title;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -17,7 +15,7 @@ use Doctrine\ORM\Mapping as ORM;
 class Movie
 {
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Genre", inversedBy="movies", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="App\Entity\Genre", inversedBy="movies", cascade={"persist", "remove"})
      */
     private $genres;
 
@@ -39,7 +37,7 @@ class Movie
     private $letterboxd_id;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\ProductionCompany", inversedBy="Movie", cascade={"persist"})
+     * @ORM\ManyToMany(targetEntity="App\Entity\ProductionCompany", inversedBy="Movie", cascade={"persist", "remove"})
      */
     private $productionCompanies;
 
@@ -59,9 +57,9 @@ class Movie
     private $tmdbId;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\WatchDate", mappedBy="movie", orphanRemoval=true, cascade={"persist"})
+     * @ORM\OneToMany(targetEntity="App\Entity\WatchDate", mappedBy="movie", orphanRemoval=true, cascade={"persist", "remove"})
      */
-    private $watchDate;
+    private $watchDates;
 
     public function __construct(
         Id $tmdbId,
@@ -69,18 +67,18 @@ class Movie
         ?LetterboxdId $letterboxdId,
         Title $title,
         Date $releaseDate,
-        ArrayCollection $watchDates,
-        ArrayCollection $genres,
-        ArrayCollection $productionCompanies
+        WatchDateList $watchDateList,
+        GenreList $genreList,
+        ProductionCompanyList $productionCompanyList
     ) {
         $this->tmdbId              = $tmdbId->getId();
         $this->imdbId              = ($imdbId !== null) ? $imdbId->getId() : null;
         $this->letterboxd_id       = ($letterboxdId !== null) ? $letterboxdId->getId() : null;
         $this->title               = (string)$title;
         $this->releaseDate         = $releaseDate->asDateTime();
-        $this->watchDate           = $watchDates;
-        $this->genres              = $genres;
-        $this->productionCompanies = $productionCompanies;
+        $this->watchDates          = $watchDateList->asArrayCollection();
+        $this->genres              = $genreList->asArrayCollection();
+        $this->productionCompanies = $productionCompanyList->asArrayCollection();
     }
 
     public function addGenre(Genre $genre) : self
@@ -88,6 +86,25 @@ class Movie
         if (!$this->genres->contains($genre)) {
             $this->genres[] = $genre;
             $genre->addMovie($this);
+        }
+
+        return $this;
+    }
+
+    public function addGenreList(GenreList $genreList) : self
+    {
+        foreach ($genreList as $genre) {
+            $this->addGenre($genre);
+        }
+
+        return $this;
+    }
+
+    public function addProductionCompanies(ProductionCompany $productionCompany) : self
+    {
+        if (!$this->productionCompanies->contains($productionCompany)) {
+            $this->productionCompanies[] = $productionCompany;
+            $productionCompany->addMovie($this);
         }
 
         return $this;
@@ -105,19 +122,22 @@ class Movie
 
     public function addWatchDate(WatchDate $watchDate) : self
     {
-        if (!$this->watchDate->contains($watchDate)) {
-            $this->watchDate[] = $watchDate;
+        if (!$this->watchDates->contains($watchDate)) {
+            $this->watchDates[] = $watchDate;
         }
 
         return $this;
     }
 
-    /**
-     * @return Collection|Genre[]
-     */
-    public function getGenres() : Collection
+    public function getGenres() : GenreList
     {
-        return $this->genres;
+        $genreList = GenreList::create();
+        /** @var Genre $genre */
+        foreach ($this->genres as $genre) {
+            $genreList->add($genre);
+        }
+
+        return $genreList;
     }
 
     public function getId() : Id
@@ -135,12 +155,15 @@ class Movie
         return ($this->letterboxd_id !== null) ? LetterboxdId::createFromString($this->letterboxd_id) : null;
     }
 
-    /**
-     * @return Collection|ProductionCompany[]
-     */
-    public function getProductionCompanies() : Collection
+    public function getProductionCompanies() : ProductionCompanyList
     {
-        return $this->productionCompanies;
+        $productionCompanyList = ProductionCompanyList::create();
+        /** @var ProductionCompany $productionCompany */
+        foreach ($this->productionCompanies as $productionCompany) {
+            $productionCompanyList->add($productionCompany);
+        }
+
+        return $productionCompanyList;
     }
 
     public function getReleaseDate() : Date
@@ -158,38 +181,24 @@ class Movie
         return ($this->tmdbId !== null) ? Id::createFromString((string)$this->tmdbId) : null;
     }
 
-    /**
-     * @return Collection|WatchDate[]
-     */
-    public function getWatchDates() : Collection
+    public function getWatchDates() : WatchDateList
     {
-        return $this->watchDate;
-    }
-
-    public function removeGenre(Genre $genre) : self
-    {
-        if ($this->genres->contains($genre)) {
-            $this->genres->removeElement($genre);
-            $genre->removeMovie($this);
+        $watchDateList = WatchDateList::create();
+        /** @var WatchDate $watchDate */
+        foreach ($this->watchDates as $watchDate) {
+            $watchDateList->add($watchDate);
         }
 
-        return $this;
+        return $watchDateList;
     }
 
-    public function removeProductionCompany(ProductionCompany $productionCompany) : self
+    public function removeWatchDate(WatchDate $oldWatchDate) : self
     {
-        if ($this->productionCompanies->contains($productionCompany)) {
-            $this->productionCompanies->removeElement($productionCompany);
-            $productionCompany->removeMovie($this);
-        }
-
-        return $this;
-    }
-
-    public function removeWatchDate(WatchDate $watchDate) : self
-    {
-        if ($this->watchDate->contains($watchDate)) {
-            $this->watchDate->removeElement($watchDate);
+        /** @var WatchDate $watchDate */
+        foreach ($this->watchDates as $key => $watchDate) {
+            if ((string)$watchDate->getDate() === (string)$oldWatchDate->getDate()) {
+                unset($this->watchDates[$key]);
+            }
         }
 
         return $this;

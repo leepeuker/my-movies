@@ -13,17 +13,17 @@ class ProductionCompanyList extends AbstractList
 
     public static function createFromArray(array $items) : self
     {
-        $genreList = self::create();
+        $productionCompanyList = self::create();
 
         foreach ($items as $item) {
-            $genreList->add(ProductionCompany::createFromArray($item));
+            $productionCompanyList->add(ProductionCompany::createFromArray($item));
         }
 
-        return $genreList;
+        return $productionCompanyList;
     }
 
-    public function add(ProductionCompany $slug) : void
+    public function add(ProductionCompany $productionCompany) : void
     {
-        $this->data[] = $slug;
+        $this->data[] = $productionCompany;
     }
 }

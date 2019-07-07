@@ -60,9 +60,6 @@ class ProductionCompany
         return Id::createFromInt($this->id);
     }
 
-    /**
-     * @return Collection|Movie[]
-     */
     public function getMovies() : Collection
     {
         return $this->movies;
@@ -71,14 +68,5 @@ class ProductionCompany
     public function getName() : string
     {
         return $this->name;
-    }
-
-    public function removeMovie(Movie $movie) : self
-    {
-        if ($this->movies->contains($movie)) {
-            $this->movies->removeElement($movie);
-        }
-
-        return $this;
     }
 }
