@@ -27,7 +27,7 @@ class CastMember
     {
         return new self(
             $data['character'],
-            Id::createFromString($data['id']),
+            Id::createFromString((string)$data['id']),
             Name::createFromString($data['name']),
             $data['order']
         );

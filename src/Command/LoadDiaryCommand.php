@@ -6,6 +6,7 @@ use App\Entity\Genre;
 use App\Entity\GenreList;
 use App\Entity\Movie;
 use App\Entity\MovieList;
+use App\Entity\Person;
 use App\Entity\ProductionCompany;
 use App\Entity\ProductionCompanyList;
 use App\Entity\WatchDate;
@@ -16,10 +17,11 @@ use App\Letterboxd\Resources\Diary\Reader;
 use App\Provider\Tmdb;
 use App\Repository\GenreRepository;
 use App\Repository\MovieRepository;
+use App\Repository\PersonRepository;
 use App\Repository\ProductionCompanyRepository;
 use App\ValueObject\Id;
 use App\ValueObject\ImdbId;
-use Doctrine\Common\Collections\ArrayCollection;
+use App\ValueObject\Name;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -39,6 +41,8 @@ class LoadDiaryCommand extends Command
 
     private          $movieRepository;
 
+    private          $personRepository;
+
     private          $productionCompanyRepository;
 
     private          $tmdbApi;
@@ -48,6 +52,7 @@ class LoadDiaryCommand extends Command
         MovieRepository $movieRepository,
         GenreRepository $genreRepository,
         ProductionCompanyRepository $productionCompanyRepository,
+        PersonRepository $personRepository,
         Reader $diaryReader,
         Letterboxd\Api $letterboxApi,
         Tmdb\Api $tmdbApi
@@ -61,6 +66,7 @@ class LoadDiaryCommand extends Command
         $this->tmdbApi                     = $tmdbApi;
         $this->genreRepository             = $genreRepository;
         $this->productionCompanyRepository = $productionCompanyRepository;
+        $this->personRepository            = $personRepository;
     }
 
     protected function configure()
@@ -129,19 +135,6 @@ class LoadDiaryCommand extends Command
             $this->createProductionCompanyList($tmdbMovie)
         );
 
-        return $movie;
-    }
-
-    private function getMovieFromDiaryItem(Item $diaryItem) : Movie
-    {
-        $movie = $this->movieRepository->findOneBy(['letterboxd_id' => $diaryItem->getLetterboxdId()]);
-
-        if ($movie === null) {
-            $providerIds = $this->letterboxdApi->getProviderIdsByLetterboxdId($diaryItem->getLetterboxdId());
-            $tmdbMovie   = $this->tmdbApi->getMovie(Id::createFromString($providerIds['tmdb']));
-            $movie       = $this->createMovie($providerIds, $diaryItem, $tmdbMovie);
-        }
-
         $this->em->persist($movie);
 
         return $movie;
@@ -170,6 +163,44 @@ class LoadDiaryCommand extends Command
         }
 
         return $genre;
+    }
+
+    private function getMovieFromDiaryItem(Item $diaryItem) : Movie
+    {
+        $movie = $this->movieRepository->findOneBy(['letterboxd_id' => $diaryItem->getLetterboxdId()]);
+
+        if ($movie === null) {
+            $providerIds = $this->letterboxdApi->getProviderIdsByLetterboxdId($diaryItem->getLetterboxdId());
+            $tmdbMovie   = $this->tmdbApi->getMovie(Id::createFromString($providerIds['tmdb']));
+            $movie       = $this->createMovie($providerIds, $diaryItem, $tmdbMovie);
+
+            $tmbdCredits = $this->tmdbApi->getCredits(Id::createFromString($providerIds['tmdb']));
+
+            /** @var Tmdb\Resources\CastMember $tmdbCastMember */
+            foreach ($tmbdCredits->getCast() as $tmdbCastMember) {
+                $person = $this->getPersonFromCastMember($tmdbCastMember);
+                // $cast = new Cast($movie->getId(), $person->getId(), $tmdbCastMember->getCharacter(), $tmdbCastMember->getOrder())
+                // $this->em->persist($cast);
+            }
+        }
+
+        return $movie;
+    }
+
+    private function getPersonFromCastMember(Tmdb\Resources\CastMember $tmdbCastMember) : Person
+    {
+        $person = $this->personRepository->findOneBy(['tmdbId' => $tmdbCastMember->getPersonId()]);
+
+        if ($person === null) {
+            $person = new Person(
+                Name::createFromString($tmdbCastMember->getName()),
+                Id::createFromString($tmdbCastMember->getPersonId())
+            );
+
+            $this->em->persist($person);
+        }
+
+        return $person;
     }
 
     private function getProductionCompany(Tmdb\Resources\ProductionCompany $tmdbProductionCompany) : ProductionCompany

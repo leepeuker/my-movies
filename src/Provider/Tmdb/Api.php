@@ -15,6 +15,11 @@ class Api
         $this->client = new \Tmdb\Client($token);
     }
 
+    public function getCredits(Id $tmdbId) : Tmdb\Resources\Credits
+    {
+        return Tmdb\Resources\Credits::createFromArray($this->client->getMoviesApi()->getCredits($tmdbId));
+    }
+
     public function getMovie(Id $tmdbId) : Tmdb\Resources\Movie
     {
         return Tmdb\Resources\Movie::createFromArray($this->client->getMoviesApi()->getMovie($tmdbId));
